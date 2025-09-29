@@ -22,7 +22,7 @@ const run = async () => {
       const query = pool.query(
         "Insert INTO orders(order_id, status) VALUES($1, $2) ON CONFLICT DO NOTHING",
         [orderID, value]
-      )
+      );
     },
   });
 };
