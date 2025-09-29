@@ -1,6 +1,16 @@
 version: "3"
 
 services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypass
+      POSTGRES_DB: ordersdb
+    ports:
+      - "5432:5432"
+
+      
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
