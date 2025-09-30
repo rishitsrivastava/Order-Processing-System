@@ -27,7 +27,6 @@ initProducer();
 //>>>>>>>>>>>>>>>>>Get all Orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 app.get("/orders", async (req, res) => {
     try{
-        const { id } = req.params;
         const result = await pool.query("SELECT * FROM orders ORDER BY created_at DESC");
         res.json(result.rows);
     } catch(err) {
