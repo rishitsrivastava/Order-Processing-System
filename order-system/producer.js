@@ -9,9 +9,17 @@ const producer = kafka.producer();
 
 const run = async () => {
     await producer.connect();
+
+    const order = {
+        order_id: "123",
+        user_id: "ris",
+        product_id: "LP533",
+        status: "PLACED"
+    }
+
     await producer.send({
         topic: "orders",
-        messages: [{ value: "Order placed for product P123 by user U456" }],
+        messages: [{ value: JSON.stringify(order)}],
     });
 
     console.log("Message sent to Kafka"),
