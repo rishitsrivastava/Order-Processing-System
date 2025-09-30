@@ -1,6 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import { Kafka, Partitioners } from "kafkajs";
+import pool from "./db.js";
 
 const app = express();
 const port = 3000;
@@ -23,6 +24,20 @@ const initProducer = async () => {
 
 initProducer();
 
+//>>>>>>>>>>>>>>>>>Get all Orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+app.get("/orders", async (req, res) => {
+    try{
+        const { id } = req.params;
+        const result = await pool.query("SELECT * FROM orders ORDER BY created_at DESC");
+        res.json(result.rows);
+    } catch(err) {
+        console.log("error in fetching orders from DB: ", err);
+        res.status(400).json({ error: "Internal Server Error"});
+    }
+});
+
+
+//>>>>>>>>>>>>>>>>>Create New Orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 app.post("/orders", async (req, res) => {
     try {
         const { order_id, user_id, product_id, status } = req.body;
