@@ -17,10 +17,10 @@ const run = async () => {
       try {
         const order = JSON.parse(message.value.toString());
 
-        console.log(`Received: ${order}`);
+        console.log("Received: ", order);
 
         const query = `
-          INSERT INTO orders (order_id, user_id, product_id, status)
+          INSERT INTO order_table (order_id, user_id, product_id, status)
           VALUES ($1, $2, $3, $4)
           ON CONFLICT (order_id) DO NOTHING
         `;
