@@ -1,6 +1,5 @@
 import { Kafka } from "kafkajs";
 import pool from "./db.js";
-import pkg from "pg";
 
 const kafka = new Kafka({
   clientId: "my-app",
@@ -9,8 +8,6 @@ const kafka = new Kafka({
 
 const consumer = kafka.consumer({ groupId: "test-group" });
 
-
-
 const run = async () => {
   await consumer.connect();
   await consumer.subscribe({ topic: "orders", fromBeginning: true });
@@ -18,9 +15,7 @@ const run = async () => {
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
       try {
-        const order = JSON.parse(message.value.toString)
-        const orderID = message.key?.toString() || "unknown";
-        const value = message.value.toString();
+        const order = JSON.parse(message.value.toString());
 
         console.log(`Received: ${order}`);
 
@@ -29,8 +24,18 @@ const run = async () => {
           VALUES ($1, $2, $3, $4)
           ON CONFLICT (order_id) DO NOTHING
         `;
+
+        await pool.query(query, [
+          order.order_id,
+          order.user_id,
+          order.product_id,
+          order.status,
+        ]);
+
+        console.log("order inserted into DB")
+
       } catch (err) {
-        console.log("error: ", err);
+        console.log("error processing message : ", err);
       }
     },
   });
