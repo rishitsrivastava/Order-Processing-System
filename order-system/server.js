@@ -35,7 +35,7 @@ app.get("/orders", async (req, res) => {
   }
 });
 
-//>>>>>>>>>>>>>>>>>Get a order from order id<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//>>>>>>>>>>>>>>>>>Get a order from order ID<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 app.get("/orders/:id", async (req, res) => {
   try {
     const { id } = req.params;
