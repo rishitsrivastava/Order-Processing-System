@@ -27,7 +27,7 @@ initProducer();
 //>>>>>>>>>>>>>>>>>Get all Orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 app.get("/orders", async (req, res) => {
     try{
-        const result = await pool.query("SELECT * FROM orders ORDER BY created_at DESC");
+        const result = await pool.query("SELECT * FROM orders BY created_at DESC");
         res.json(result.rows);
     } catch(err) {
         console.log("error in fetching orders from DB: ", err);

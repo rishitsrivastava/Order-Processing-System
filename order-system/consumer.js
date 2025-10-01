@@ -20,7 +20,7 @@ const run = async () => {
         console.log("Received: ", order);
 
         const query = `
-          INSERT INTO order_table (order_id, user_id, product_id, status)
+          INSERT INTO orders (order_id, user_id, product_id, status)
           VALUES ($1, $2, $3, $4)
           ON CONFLICT (order_id) DO NOTHING
         `;
