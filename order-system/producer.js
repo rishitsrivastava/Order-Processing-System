@@ -8,7 +8,7 @@ const kafka = new Kafka({
 const producer = kafka.producer();
 
 const run = async () => {
-    await producer.connect();
+    await producer.connect()
 
     const order = {
         order_id: "123",
