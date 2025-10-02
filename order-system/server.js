@@ -73,6 +73,26 @@ app.put("/orders/:id", async (req, res) => {
   }
 });
 
+//>>>>>>>>>>>>>>>>>>>Delete orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+app.delete("orders/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = "DELETE FROM orders WHERE order_id $1 RETURNING *"
+
+    const result = await pool.query(query, [id]);
+
+    if(result.rows.length === 0) {
+      return res.status(400).json({ error: `order not found from order_id: ${id}`});
+    }
+
+    res.json({ message: "order deleted ", order: result.rows[0]});
+  } catch(err) {
+    console.error("Error deleting order:", err);
+    res.status(500).json({ error: "Internal Server Error"});
+  }
+})
+
+
 //>>>>>>>>>>>>>>>>>Create New Orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 app.post("/orders", async (req, res) => {
   try {
