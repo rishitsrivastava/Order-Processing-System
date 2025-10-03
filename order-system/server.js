@@ -24,6 +24,102 @@ const initProducer = async () => {
 
 initProducer();
 
+//>>>>>>>>>>>>>>>>>Create New Orders (Booked)<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+app.post("/orders", async (req, res) => {
+  try {
+    const { order_id, user_id, product_id } = req.body;
+
+    if (!order_id || !user_id || !product_id || !status) {
+      return res.status(400).json({ error: "Missing required field" });
+    }
+    await producer.send({
+      topic: "orders",
+      messages: [
+        {
+          value: JSON.stringify({
+            event: "ORDER_BOOKED",
+            order_id,
+            user_id,
+            product_id,
+          }),
+        },
+      ],
+    });
+    res.status(201).json({ message: "Order booked event sent to Kafka" });
+  } catch (err) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// >>>>>>>>>>>>>>>>>> Ship Order <<<<<<<<<<<<<<<<<<<<<<<
+app.put("/orders/:id/ship", async (req, res) => {
+  try {
+    const {id} = req.params;
+
+    await producer.send({
+      topic: "orders",
+      messages: [{
+        value: JSON.stringify({
+          event: "ORDER_SHIPPED",
+          order_id: id,
+        })
+      }]
+    })
+
+    res.json({ message: `Order ${id} shipped event sent`});
+  } catch( err ) {
+    console.error("error shipping order: ", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+})
+
+// >>>>>>>>>>>>>>>>>> Deliver Order <<<<<<<<<<<<<<<<<<<<<<<
+app.put("/orders/:id/deliver", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await producer.send({
+      topic: "orders",
+      messages: [
+        {
+          value: JSON.stringify({
+            event: "ORDER_DELIVERED",
+            order_id: id,
+          }),
+        },
+      ],
+    });
+
+    res.json({ message: `Order ${id} delivered event sent` });
+  } catch (err) {
+    console.error("Error delivering order:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// >>>>>>>>>>>>>>>>>> Cancel Order <<<<<<<<<<<<<<<<<<<<<<<
+app.put("/orders/:id/cancel", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await producer.send({
+      topic: "orders",
+      messages: [
+        {
+          value: JSON.stringify({
+            event: "ORDER_CANCELLED",
+            order_id: id,
+          }),
+        },
+      ],
+    });
+    res.json({ message: `Order ${id} cancelled event sent` });
+  } catch (err) {
+    console.error("Error cancelling order:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 //>>>>>>>>>>>>>>>>>Get all Orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 app.get("/orders", async (req, res) => {
   try {
@@ -93,33 +189,6 @@ app.delete("/orders/:id", async (req, res) => {
   }
 });
 
-//>>>>>>>>>>>>>>>>>Create New Orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-app.post("/orders", async (req, res) => {
-  try {
-    const { order_id, user_id, product_id, status } = req.body;
-
-    if (!order_id || !user_id || !product_id || !status) {
-      return res.status(400).json({ error: "Missing required field" });
-    }
-    await producer.send({
-      topic: "orders",
-      messages: [
-        {
-          value: JSON.stringify({
-            event: "ORDER_BOOKED",
-            order_id,
-            user_id,
-            product_id,
-            status: "BOOKED",
-          }),
-        },
-      ],
-    });
-    res.status(201).json({ message: "Order sent to Kafka" });
-  } catch (err) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
 
 app.listen(port, () => {
   console.log(`order API running at http://localhost:${port}`);
