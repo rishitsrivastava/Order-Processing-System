@@ -106,10 +106,11 @@ app.post("/orders", async (req, res) => {
       messages: [
         {
           value: JSON.stringify({
+            event: "ORDER_BOOKED",
             order_id,
             user_id,
             product_id,
-            status,
+            status: "BOOKED",
           }),
         },
       ],
