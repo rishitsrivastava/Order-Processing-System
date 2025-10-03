@@ -1,0 +1,48 @@
+📌 Next Milestones in Node.js Project:
+
+
+1. Multiple Consumers
+
+Right now, you only have order-consumer.
+We’ll add more consumers to act like different microservices:
+
+Order Consumer → Handles booking, shipping, delivery updates.
+
+Shipping Consumer → Listens for ORDER_SHIPPED events, maybe adds shipping details.
+
+Notification Consumer → Listens for status changes and sends mock notifications (log/email/sms simulation).
+
+👉 This teaches you Kafka Pub/Sub pattern where multiple consumers read from the same event stream.
+
+--------------------------------------------------------------------------------------------------------------------------
+
+2. Dead Letter Queue (DLQ)
+
+Sometimes, consumers fail to process messages (e.g., DB error, invalid data).
+We’ll implement:
+
+A retry mechanism (try 3 times).
+
+If it still fails → push the event to a orders.DLQ topic.
+
+DLQ will store bad messages for later debugging.
+
+👉 This mirrors real-world resilience.
+
+--------------------------------------------------------------------------------------------------------------------------
+
+3. Replay Events
+
+In event-driven systems, we often need to replay past events (e.g., to rebuild a service state after crash).
+
+We’ll build a Replay Service:
+
+Reads from DLQ or archived topics.
+
+Replays messages into the main topic.
+
+Consumers reprocess them to rebuild state.
+
+👉 This teaches you event sourcing mindset.
+
+4. REST APIs
