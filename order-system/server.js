@@ -27,7 +27,9 @@ initProducer();
 //>>>>>>>>>>>>>>>>>Get all Orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 app.get("/orders", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM orders BY created_at DESC");
+    const result = await pool.query(
+      "SELECT * FROM orders ORDER BY created_at DESC"
+    );
     res.json(result.rows);
   } catch (err) {
     console.log("error in fetching orders from DB: ", err);
@@ -74,24 +76,22 @@ app.put("/orders/:id", async (req, res) => {
 });
 
 //>>>>>>>>>>>>>>>>>>>Delete orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-app.delete("orders/:id", async (req, res) => {
+app.delete("/orders/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const query = "DELETE FROM orders WHERE order_id $1 RETURNING *"
-
+    const query = "DELETE FROM orders WHERE order_id=$1 RETURNING *";
     const result = await pool.query(query, [id]);
-
-    if(result.rows.length === 0) {
-      return res.status(400).json({ error: `order not found from order_id: ${id}`});
+    if (result.rows.length === 0) {
+      return res
+        .status(400)
+        .json({ error: `order not found from order_id: ${id}` });
     }
-
-    res.json({ message: "order deleted ", order: result.rows[0]});
-  } catch(err) {
+    res.json({ message: "order deleted ", order: result.rows[0] });
+  } catch (err) {
     console.error("Error deleting order:", err);
-    res.status(500).json({ error: "Internal Server Error"});
+    res.status(500).json({ error: "Internal Server Error" });
   }
-})
-
+});
 
 //>>>>>>>>>>>>>>>>>Create New Orders<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 app.post("/orders", async (req, res) => {
