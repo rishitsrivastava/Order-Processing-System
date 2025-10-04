@@ -29,7 +29,7 @@ app.post("/orders", async (req, res) => {
   try {
     const { order_id, user_id, product_id } = req.body;
 
-    if (!order_id || !user_id || !product_id || !status) {
+    if (!order_id || !user_id || !product_id) {
       return res.status(400).json({ error: "Missing required field" });
     }
     await producer.send({
@@ -146,7 +146,7 @@ app.get("/orders/:id", async (req, res) => {
     }
     res.json(result.rows[0]);
   } catch (error) {
-    console.log("error fetching order by id: ", err);
+    console.log("error fetching order by id: ", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
