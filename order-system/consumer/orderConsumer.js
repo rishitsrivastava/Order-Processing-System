@@ -29,6 +29,22 @@ const run = async () => {
                 [order_id, user_id, product_id, "BOOKED"]
               );
               console.log(`Order ${order_id} booked`);
+
+              await producer.send({
+                topic: "orders",
+                messages: [
+                  {
+                    value: JSON.stringify({
+                      event: "ORDER_SHIPPED",
+                      order_id,
+                      user_id,
+                      product_id,
+                      status: "SHIPPED",
+                    }),
+                  },
+                ],
+              });
+              console.log(`Emitted order_shipped for ${order_id}`);
               break;
 
             case "ORDER_SHIPPED":
@@ -37,6 +53,21 @@ const run = async () => {
                 ["SHIPPED", order_id]
               );
               console.log(`Order ${order_id} shipped.`);
+               await producer.send({
+                 topic: "orders",
+                 messages: [
+                   {
+                     value: JSON.stringify({
+                       event: "ORDER_DELIVERED",
+                       order_id,
+                       user_id,
+                       product_id,
+                       status: "DELIVERED",
+                     }),
+                   },
+                 ],
+               });
+               console.log(`📨 Emitted ORDER_DELIVERED for ${order_id}`);
               break;
 
             case "ORDER_DELIVERED":
@@ -45,6 +76,21 @@ const run = async () => {
                 ["DELIVERED", order_id]
               );
               console.log(`Order ${order_id} delivered`);
+              await producer.send({
+                topic: "orders",
+                messages: [
+                  {
+                    value: JSON.stringify({
+                      event: "ORDER_COMPLETED",
+                      order_id,
+                      user_id,
+                      product_id,
+                      status: "COMPLETED",
+                    }),
+                  },
+                ],
+              });
+              console.log(`🎉 Emitted ORDER_COMPLETED for ${order_id}`);
               break;
 
             case "ORDER_CANCELLED":
@@ -68,4 +114,6 @@ const run = async () => {
   });
 };
 
-run().catch(console.error);
+if (process.argv[1].includes("orderConsumer.js")) {
+  runOrderConsumer().catch(console.error);
+}
