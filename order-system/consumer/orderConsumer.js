@@ -115,5 +115,5 @@ const run = async () => {
 };
 
 if (process.argv[1].includes("orderConsumer.js")) {
-  runOrderConsumer().catch(console.error);
+  run().catch(console.error);
 }
