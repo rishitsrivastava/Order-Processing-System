@@ -47,28 +47,7 @@ const run = async () => {
               console.log(`Emitted order_shipped for ${order_id}`);
               break;
 
-            case "ORDER_SHIPPED":
-              await pool.query(
-                "UPDATE orders SET status = $1 WHERE order_id = $2",
-                ["SHIPPED", order_id]
-              );
-              console.log(`Order ${order_id} shipped.`);
-               await producer.send({
-                 topic: "orders",
-                 messages: [
-                   {
-                     value: JSON.stringify({
-                       event: "ORDER_DELIVERED",
-                       order_id,
-                       user_id,
-                       product_id,
-                       status: "DELIVERED",
-                     }),
-                   },
-                 ],
-               });
-               console.log(`📨 Emitted ORDER_DELIVERED for ${order_id}`);
-              break;
+            
 
             case "ORDER_DELIVERED":
               await pool.query(
