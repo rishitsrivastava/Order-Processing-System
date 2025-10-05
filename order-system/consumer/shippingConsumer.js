@@ -1,4 +1,4 @@
-import { Kafka } from "kafkajs";
+import { Kafka, Partitioners } from "kafkajs";
 import pool from "../db.js";
 
 const kafka = new Kafka({
@@ -7,7 +7,9 @@ const kafka = new Kafka({
 });
 
 const consumer = kafka.consumer({ groupId: "shipping-group" });
-const producer = kafka.producer();
+const producer = kafka.producer({
+    createPartitioner: Partitioners.DefaultPartitioner,
+});
 
 const run = async () => {
   await consumer.connect();
@@ -54,8 +56,6 @@ const run = async () => {
   });
 };
 
-if (process.argv[1].includes("shippingConsumer.js")) {
-  run().catch(console.error);
-}
+run().catch(console.error);
 
 export default run;
