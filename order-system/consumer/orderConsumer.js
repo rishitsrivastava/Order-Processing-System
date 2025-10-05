@@ -7,92 +7,69 @@ const kafka = new Kafka({
 });
 
 const consumer = kafka.consumer({ groupId: "order-group" });
+const producer = kafka.producer(); 
 
-const run = async () => {
+const runOrderConsumer = async () => {
   await consumer.connect();
+  await producer.connect();
   await consumer.subscribe({ topic: "orders", fromBeginning: true });
+
+  console.log("🧾 OrderConsumer running...");
 
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
       try {
         const order = JSON.parse(message.value.toString());
-
-        console.log("Received event: ", order);
-
         const { event, order_id, user_id, product_id } = order;
 
-        try {
-          switch (event) {
-            case "ORDER_BOOKED":
-              await pool.query(
-                `INSERT INTO orders (order_id, user_id, product_id, status, created_at) VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT (order_id) DO UPDATE SET STATUS = EXCLUDED.status`,
-                [order_id, user_id, product_id, "BOOKED"]
-              );
-              console.log(`Order ${order_id} booked`);
+        console.log("📨 Received event: ", event, order_id);
 
-              await producer.send({
-                topic: "orders",
-                messages: [
-                  {
-                    value: JSON.stringify({
-                      event: "ORDER_SHIPPED",
-                      order_id,
-                      user_id,
-                      product_id,
-                      status: "SHIPPED",
-                    }),
-                  },
-                ],
-              });
-              console.log(`Emitted order_shipped for ${order_id}`);
-              break;
+        switch (event) {
+          case "ORDER_BOOKED":
+            await pool.query(
+              `INSERT INTO orders (order_id, user_id, product_id, status, created_at)
+               VALUES ($1, $2, $3, $4, NOW())
+               ON CONFLICT (order_id) DO UPDATE SET status = EXCLUDED.status`,
+              [order_id, user_id, product_id, "BOOKED"]
+            );
+            console.log(`✅ Order ${order_id} booked.`);
 
-            
+            await producer.send({
+              topic: "orders",
+              messages: [
+                {
+                  value: JSON.stringify({
+                    event: "ORDER_SHIPPED",
+                    order_id,
+                    user_id,
+                    product_id,
+                    status: "SHIPPED",
+                  }),
+                },
+              ],
+            });
+            console.log(`Emitted ORDER_SHIPPED for ${order_id}`);
+            break;
 
-            case "ORDER_DELIVERED":
-              await pool.query(
-                "UPDATE orders SET status = $1 where order_id = $2",
-                ["DELIVERED", order_id]
-              );
-              console.log(`Order ${order_id} delivered`);
-              await producer.send({
-                topic: "orders",
-                messages: [
-                  {
-                    value: JSON.stringify({
-                      event: "ORDER_COMPLETED",
-                      order_id,
-                      user_id,
-                      product_id,
-                      status: "COMPLETED",
-                    }),
-                  },
-                ],
-              });
-              console.log(`🎉 Emitted ORDER_COMPLETED for ${order_id}`);
-              break;
+          case "ORDER_CANCELLED":
+            await pool.query(
+              "UPDATE orders SET status = $1 WHERE order_id = $2",
+              ["CANCELLED", order_id]
+            );
+            console.log(`Order ${order_id} cancelled`);
+            break;
 
-            case "ORDER_CANCELLED":
-              await pool.query(
-                "UPDATE orders SET status = $1 WHERE order_id = $2",
-                ["CANCELLED", order_id]
-              );
-              console.log(`Order ${order_id} cancelled`);
-              break;
-
-            default:
-              console.log("Unknown event: ", event);
-          }
-        } catch (err) {
-          console.error("Error processing the event: ", err);
+          default:
+            // Do nothing for other events
+            break;
         }
       } catch (err) {
-        console.error("Error in processing the message:", err);
+        console.error("Error processing message:", err);
       }
     },
   });
 };
 
 if (process.argv[1].includes("orderConsumer.js")) {
-  run().catch(console.error);
+  runOrderConsumer().catch(console.error);
 }
