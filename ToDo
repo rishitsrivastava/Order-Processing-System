@@ -45,4 +45,14 @@ Consumers reprocess them to rebuild state.
 
 👉 This teaches you event sourcing mindset.
 
-4. REST APIs
+Option 4: Add Persistent Storage
+
+Currently, your services may only log data.
+
+Use a database (like MongoDB or PostgreSQL) for:
+
+Orders (status, items, user)
+
+Shipments (tracking info)
+
+Notifications (history/logs)
