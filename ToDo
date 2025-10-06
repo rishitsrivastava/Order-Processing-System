@@ -45,14 +45,14 @@ Consumers reprocess them to rebuild state.
 
 👉 This teaches you event sourcing mindset.
 
-Option 4: Add Persistent Storage
+--------------------------------------------------------------------------------------------------------------------------
 
-Currently, your services may only log data.
+4: Add a Monitoring Dashboard
 
-Use a database (like MongoDB or PostgreSQL) for:
+Build a small web dashboard showing:
 
-Orders (status, items, user)
+All orders and their current status.
 
-Shipments (tracking info)
+Event logs.
 
-Notifications (history/logs)
+Real-time updates using WebSocket or polling.
