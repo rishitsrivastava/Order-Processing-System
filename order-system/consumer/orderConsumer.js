@@ -23,36 +23,28 @@ consumer.run({
     const orderId = event.orderId;
 
     try {
-      // 🔹 Step 1: Idempotency check
       const { rows } = await pool.query(
         "SELECT 1 FROM processed_events WHERE event_id = $1",
         [eventId]
       );
-
       if (rows.length > 0) {
         console.log(
           `⚠️ Duplicate event detected: ${eventId}, skipping processing.`
         );
         return;
       }
-
       let attempts = 0;
       let success = false;
-
-      // 🔹 Step 2: Retry logic
       while (attempts < 3 && !success) {
         try {
           console.log(
             `🚀 Processing order ${orderId}, attempt ${attempts + 1}`
           );
-
           await pool.query(
             "INSERT INTO orders (order_id, status, created_at) VALUES ($1, $2, now())",
             [orderId, event.status || "PENDING"]
           );
-
           success = true;
-
           await pool.query(
             "INSERT INTO processed_events (event_id, order_id, consumer) VALUES ($1, $2, $3)",
             [eventId, orderId, "order-consumer"]
