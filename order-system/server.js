@@ -33,7 +33,7 @@ app.post("/orders", async (req, res) => {
       return res.status(400).json({ error: "Missing required field" });
     }
     await producer.send({
-      topic: "orders",
+      topic: "orders.main",
       messages: [
         {
           value: JSON.stringify({
@@ -57,7 +57,7 @@ app.put("/orders/:id/ship", async (req, res) => {
     const {id} = req.params;
 
     await producer.send({
-      topic: "orders",
+      topic: "orders.main",
       messages: [{
         value: JSON.stringify({
           event: "ORDER_SHIPPED",
@@ -79,7 +79,7 @@ app.put("/orders/:id/deliver", async (req, res) => {
     const { id } = req.params;
 
     await producer.send({
-      topic: "orders",
+      topic: "orders.main",
       messages: [
         {
           value: JSON.stringify({
@@ -103,7 +103,7 @@ app.put("/orders/:id/cancel", async (req, res) => {
     const { id } = req.params;
 
     await producer.send({
-      topic: "orders",
+      topic: "orders.main",
       messages: [
         {
           value: JSON.stringify({
