@@ -60,13 +60,16 @@ app.put("/orders/:id/ship", async (req, res) => {
 
     await producer.send({
       topic: "orders.main",
-      messages: [{
-        value: JSON.stringify({
-          event: "ORDER_SHIPPED",
-          order_id: id,
-        })
-      }]
-    })
+      messages: [
+        {
+          value: JSON.stringify({
+            event_id: randomUUID(),
+            event: "ORDER_SHIPPED",
+            order_id: id,
+          }),
+        },
+      ],
+    });
 
     res.json({ message: `Order ${id} shipped event sent`});
   } catch( err ) {
@@ -85,6 +88,7 @@ app.put("/orders/:id/deliver", async (req, res) => {
       messages: [
         {
           value: JSON.stringify({
+            event_id: randomUUID(),
             event: "ORDER_DELIVERED",
             order_id: id,
           }),
@@ -109,6 +113,7 @@ app.put("/orders/:id/cancel", async (req, res) => {
       messages: [
         {
           value: JSON.stringify({
+            event_id: randomUUID(),
             event: "ORDER_CANCELLED",
             order_id: id,
           }),

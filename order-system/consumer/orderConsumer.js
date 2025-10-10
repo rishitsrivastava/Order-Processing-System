@@ -19,8 +19,8 @@ console.log("✅ Order consumer is running and subscribed to 'orders.main'...");
 consumer.run({
   eachMessage: async ({ topic, partition, message }) => {
     const event = JSON.parse(message.value.toString());
-    const eventId = event.eventId;
-    const orderId = event.orderId;
+    const eventId = event.event_id;
+    const orderId = event.order_id;
 
     try {
       const { rows } = await pool.query(
