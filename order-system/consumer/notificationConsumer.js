@@ -9,7 +9,7 @@ const consumer = kafka.consumer({ groupId: "notification-group" });
 
 const run = async () => {
   await consumer.connect();
-  await consumer.subscribe({ topic: "orders", fromBeginning: true });
+  await consumer.subscribe({ topic: "orders.main", fromBeginning: true });
 
   console.log("🔔 NotificationConsumer is running...");
 

@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import { Kafka, Partitioners } from "kafkajs";
 import pool from "./db.js";
+import { randomUUID } from "crypto";
 
 const app = express();
 const port = 3000;
@@ -37,6 +38,7 @@ app.post("/orders", async (req, res) => {
       messages: [
         {
           value: JSON.stringify({
+            event_id: randomUUID(),
             event: "ORDER_BOOKED",
             order_id,
             user_id,

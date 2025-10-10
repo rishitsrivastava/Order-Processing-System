@@ -14,7 +14,7 @@ const producer = kafka.producer({
 const run = async () => {
   await consumer.connect();
   await producer.connect();
-  await consumer.subscribe({ topic: "orders", fromBeginning: true });
+  await consumer.subscribe({ topic: "orders.main", fromBeginning: true });
 
   console.log("Shipping consumer is running...");
 
