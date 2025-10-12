@@ -41,19 +41,19 @@ consumer.run({
             `🚀 Processing order ${orderId}, attempt ${attempts + 1}`
           );
           await pool.query(
-            "INSERT INTO orders (order_id, status, created_at) VALUES ($1, $2, now())",
-            [orderId, event.status || "PENDING"]
-          );
-          success = true;
-          await pool.query(
             `INSERT INTO orders (order_id, user_id, product_id, status, created_at)
-            VALUES ($1, $2, $3, $4, now())`,
+     VALUES ($1, $2, $3, $4, now())`,
             [
               event.order_id,
               event.user_id,
               event.product_id,
               event.status || "PENDING",
             ]
+          );
+
+          await pool.query(
+            "INSERT INTO processed_events (event_id, order_id, consumer) VALUES ($1, $2, $3)",
+            [eventId, orderId, "order-consumer"]
           );
           console.log("🧾 Inserting:", event);
           console.log(`✅ Order ${orderId} processed successfully`);
