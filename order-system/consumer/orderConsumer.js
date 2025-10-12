@@ -22,73 +22,91 @@ consumer.run({
     const eventId = event.event_id;
     const orderId = event.order_id;
 
-    try {
-      const { rows } = await pool.query(
-        "SELECT 1 FROM processed_events WHERE event_id = $1",
-        [eventId]
-      );
-      if (rows.length > 0) {
-        console.log(
-          `⚠️ Duplicate event detected: ${eventId}, skipping processing.`
-        );
-        return;
-      }
-      let attempts = 0;
-      let success = false;
-      while (attempts < 3 && !success) {
-        try {
-          console.log(
-            `🚀 Processing order ${orderId}, attempt ${attempts + 1}`
-          );
-          await pool.query(
-            `INSERT INTO orders (order_id, user_id, product_id, status, created_at)
-     VALUES ($1, $2, $3, $4, now())`,
-            [
-              event.order_id,
-              event.user_id,
-              event.product_id,
-              event.status || "PENDING",
-            ]
-          );
+    console.log(`📩 Received event: ${eventId} for order ${orderId}`);
 
-          await pool.query(
-            "INSERT INTO processed_events (event_id, order_id, consumer) VALUES ($1, $2, $3)",
-            [eventId, orderId, "order-consumer"]
-          );
-          console.log("🧾 Inserting:", event);
-          console.log(`✅ Order ${orderId} processed successfully`);
-        } catch (err) {
-          attempts++;
+    const { rows } = await pool.query(
+      "SELECT 1 FROM processed_events WHERE event_id = $1",
+      [eventId]
+    );
+    if (rows.length > 0) {
+      console.log(`⚠️ Duplicate event ${eventId}, skipping.`);
+      return;
+    }
+
+    let attempts = 0;
+    let success = false;
+
+    while (attempts < 3 && !success) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+
+        console.log(`🚀 Processing order ${orderId}, attempt ${attempts + 1}`);
+
+        await client.query(
+          `INSERT INTO orders (order_id, user_id, product_id, status, created_at)
+           VALUES ($1, $2, $3, $4, now())
+           ON CONFLICT (order_id) DO UPDATE
+           SET status = EXCLUDED.status,
+               user_id = EXCLUDED.user_id,
+               product_id = EXCLUDED.product_id`,
+          [
+            event.order_id,
+            event.user_id,
+            event.product_id,
+            event.status || "PENDING",
+          ]
+        );
+
+        await client.query(
+          `INSERT INTO processed_events (event_id, order_id, consumer)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (event_id) DO NOTHING`,
+          [eventId, orderId, "order-consumer"]
+        );
+
+        await client.query("COMMIT");
+        success = true;
+        console.log(`✅ Order ${orderId} processed successfully`);
+      } catch (err) {
+        await client.query("ROLLBACK");
+        attempts++;
+
+        if (
+          err.message.includes("duplicate key value violates unique constraint")
+        ) {
+          console.log(`⚠️ Duplicate order ${orderId}, skipping reprocessing.`);
+          success = true;
+        } else {
           console.error(
             `❌ Error processing order ${orderId} (attempt ${attempts}): ${err.message}`
           );
-
-          if (attempts >= 3) {
-            console.log(
-              `🚨 Moving event ${eventId} to DLQ after 3 failed attempts...`
-            );
-            await producer.send({
-              topic: "orders.DLQ",
-              messages: [
-                {
-                  key: eventId,
-                  value: JSON.stringify({
-                    eventId,
-                    orderId,
-                    error: err.message,
-                    payload: event,
-                    timestamp: new Date().toISOString(),
-                  }),
-                },
-              ],
-            });
-          }
         }
+
+        if (!success && attempts >= 3) {
+          console.log(
+            `🚨 Moving event ${eventId} to DLQ after 3 failed attempts...`
+          );
+          await producer.send({
+            topic: "orders.DLQ",
+            messages: [
+              {
+                key: eventId,
+                value: JSON.stringify({
+                  eventId,
+                  orderId,
+                  error: err.message,
+                  payload: event,
+                  timestamp: new Date().toISOString(),
+                }),
+              },
+            ],
+          });
+        }
+      } finally {
+        client.release();
       }
-    } catch (err) {
-      console.log(
-        `⚠️ Unexpected failure handling event ${eventId}: ${err.message}`
-      );
     }
   },
 });
+
