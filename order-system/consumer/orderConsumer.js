@@ -39,7 +39,7 @@ consumer.run({
     while (attempts < 3 && !success) {
       const client = await pool.connect();
       try {
-        await client.query("BEGIN");
+        await client.query("BEGIN"); //transaction start
 
         console.log(`🚀 Processing order ${orderId}, attempt ${attempts + 1}`);
 
@@ -65,11 +65,11 @@ consumer.run({
           [eventId, orderId, "order-consumer"]
         );
 
-        await client.query("COMMIT");
+        await client.query("COMMIT"); //transaction end
         success = true;
         console.log(`✅ Order ${orderId} processed successfully`);
       } catch (err) {
-        await client.query("ROLLBACK");
+        await client.query("ROLLBACK"); //transaction rollback, if anything fails in above try block then rollback everythng.
         attempts++;
 
         if (
