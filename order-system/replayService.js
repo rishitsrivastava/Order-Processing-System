@@ -1,6 +1,6 @@
 import { Kafka } from "kafkajs";
 
-const kafka = new kafka({
+const kafka = new Kafka({
     clientId: "replay-service",
     brokers: ["localhost:9092"] 
 })
