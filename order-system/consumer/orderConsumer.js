@@ -18,6 +18,7 @@ console.log("✅ Order consumer is running and subscribed to 'orders.main'...");
 
 consumer.run({
   eachMessage: async ({ topic, partition, message }) => {
+
     const event = JSON.parse(message.value.toString());
     const eventId = event.event_id;
     const orderId = event.order_id;
@@ -40,6 +41,9 @@ consumer.run({
       const client = await pool.connect();
       try {
         await client.query("BEGIN"); //transaction start
+        if (event.order_id === "O999") {
+          throw new Error("Simulated DB failure for testing replay");
+        }
 
         console.log(`🚀 Processing order ${orderId}, attempt ${attempts + 1}`);
 
