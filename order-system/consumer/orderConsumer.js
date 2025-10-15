@@ -18,7 +18,6 @@ console.log("✅ Order consumer is running and subscribed to 'orders.main'...");
 
 consumer.run({
   eachMessage: async ({ topic, partition, message }) => {
-
     const event = JSON.parse(message.value.toString());
     const eventId = event.event_id;
     const orderId = event.order_id;
@@ -88,24 +87,30 @@ consumer.run({
         }
 
         if (!success && attempts >= 3) {
-          console.log(
-            `🚨 Moving event ${eventId} to DLQ after 3 failed attempts...`
-          );
-          await producer.send({
-            topic: "orders.DLQ",
-            messages: [
-              {
-                key: eventId,
-                value: JSON.stringify({
-                  eventId,
-                  orderId,
-                  error: err.message,
-                  payload: event,
-                  timestamp: new Date().toISOString(),
-                }),
-              },
-            ],
-          });
+          if (event.replayed) {
+            console.log(
+              `Replay event ${eventId} failed again, NOT sending back to DLQ. Manual check required`
+            );
+          } else {
+            console.log(
+              `🚨 Moving event ${eventId} to DLQ after 3 failed attempts...`
+            );
+            await producer.send({
+              topic: "orders.DLQ",
+              messages: [
+                {
+                  key: eventId,
+                  value: JSON.stringify({
+                    eventId,
+                    orderId,
+                    error: err.message,
+                    payload: event,
+                    timestamp: new Date().toISOString(),
+                  }),
+                },
+              ],
+            });
+          }
         }
       } finally {
         client.release();
@@ -113,4 +118,3 @@ consumer.run({
     }
   },
 });
-

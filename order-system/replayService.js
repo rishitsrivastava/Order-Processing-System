@@ -15,16 +15,13 @@ async function replayDLQ() {
   await consumer.subscribe({ topic: "orders.DLQ", fromBeginning: true });
   console.log("Replay service connected to orders.DLQ");
 
-  let replayCount = 0;
-
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
-      try {
         const dlqEvent = JSON.parse(message.value.toString());
         console.log(
-          `Replaying event ${dlqEvent.eventId} for ordder ${dlqEvent.orderId}`
+          `Replaying event ${dlqEvent.eventId} for order ${dlqEvent.orderId}`
         );
-
+        try {
         await producer.send({
           topic: "orders.main",
           messages: [
@@ -38,6 +35,7 @@ async function replayDLQ() {
             },
           ],
         });
+            console.log(`Replayed event ${dlqEvent.eventId} successfully`)
       } catch (err) {
         console.log("Error replaying message:", err.messaage);
       }
