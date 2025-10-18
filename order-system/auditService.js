@@ -10,7 +10,7 @@ const consumer = kafka.consumer({ groupId: "order-audit-group" });
 
 async function startAuditService() {
   await consumer.connect();
-  await consumer.subscribe({ topic: "orders.main", fromBeginning: true });
+  await consumer.subscribe({ topic: "orders.main", fromBeginning: false });
 
   console.log("🧾 Audit service running... Listening to 'orders.main'");
 
