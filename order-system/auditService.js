@@ -1,0 +1,45 @@
+import { Kafka } from "kafkajs";
+import pool from "./db.js";
+
+const kafka = new Kafka({
+  clientId: "order-audit-service",
+  brokers: ["localhost:9092"],
+});
+
+const consumer = kafka.consumer({ groupId: "order-audit-group" });
+
+async function startAuditService() {
+  await consumer.connect();
+  await consumer.subscribe({ topic: "orders.main", fromBeginning: true });
+
+  console.log("🧾 Audit service running... Listening to 'orders.main'");
+
+  await consumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      try {
+        const event = JSON.parse(message.value.toString());
+        const eventId = event.event_id;
+        const orderId = event.order_id;
+        const eventType = event.event || "UNKNOWN";
+        const status = event.status || "N/A";
+
+        console.log(
+          `📝 Auditing event ${eventId} [${eventType}] for order ${orderId}`
+        );
+
+        await pool.query(
+          `INSERT INTO order_events_audit (event_id, order_id, event_type, status, payload)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT DO NOTHING`,
+          [eventId, orderId, eventType, status, event]
+        );
+      } catch (err) {
+        console.error("❌ Audit service error:", err.message);
+      }
+    },
+  });
+}
+
+startAuditService().catch((err) => {
+  console.error("Audit service failed:", err);
+});

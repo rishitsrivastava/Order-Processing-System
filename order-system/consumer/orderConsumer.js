@@ -40,9 +40,6 @@ consumer.run({
       const client = await pool.connect();
       try {
         await client.query("BEGIN"); //transaction start
-        if (event.order_id === "O999") {
-          throw new Error("Simulated DB failure for testing replay");
-        }
 
         console.log(`🚀 Processing order ${orderId}, attempt ${attempts + 1}`);
 
