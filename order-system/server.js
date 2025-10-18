@@ -56,27 +56,40 @@ app.post("/orders", async (req, res) => {
 // >>>>>>>>>>>>>>>>>> Ship Order <<<<<<<<<<<<<<<<<<<<<<<
 app.put("/orders/:id/ship", async (req, res) => {
   try {
-    const {id} = req.params;
+    const { id } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM orders WHERE order_id = $1",
+      [id]
+    );
 
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const order = result.rows[0]; 
+    
     await producer.send({
       topic: "orders.main",
       messages: [
         {
           value: JSON.stringify({
-            event_id: randomUUID(),
             event: "ORDER_SHIPPED",
+            event_id: crypto.randomUUID(),
             order_id: id,
+            user_id: order.user_id,
+            product_id: order.product_id,
+            status: "SHIPPED",
           }),
         },
       ],
     });
 
-    res.json({ message: `Order ${id} shipped event sent`});
-  } catch( err ) {
+    res.json({ message: `Order ${id} shipped event sent` });
+  } catch (err) {
     console.error("error shipping order: ", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
-})
+});
 
 // >>>>>>>>>>>>>>>>>> Deliver Order <<<<<<<<<<<<<<<<<<<<<<<
 app.put("/orders/:id/deliver", async (req, res) => {
@@ -210,7 +223,6 @@ app.get("/audit/:orderId", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 app.listen(port, () => {
   console.log(`order API running at http://localhost:${port}`);

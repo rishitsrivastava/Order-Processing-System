@@ -6,7 +6,10 @@ const kafka = new Kafka({
   brokers: ["localhost:9092"],
 });
 
-const consumer = kafka.consumer({ groupId: "order-audit-group" });
+const consumer = kafka.consumer({
+  groupId: "order-audit-group",
+  autoCommit: false,
+});
 
 async function startAuditService() {
   await consumer.connect();
@@ -15,7 +18,8 @@ async function startAuditService() {
   console.log("🧾 Audit service running... Listening to 'orders.main'");
 
   await consumer.run({
-    eachMessage: async ({ topic, partition, message }) => {
+    autoCommit: false,
+    eachMessage: async ({ topic, partition, message, pause, heartbeat }) => {
       try {
         const event = JSON.parse(message.value.toString());
         const eventId = event.event_id;
@@ -33,9 +37,23 @@ async function startAuditService() {
            ON CONFLICT DO NOTHING`,
           [eventId, orderId, eventType, status, event]
         );
+
+        await consumer.commitOffsets([
+          {
+            topic,
+            partition,
+            offset: (Number(message.offset) + 1).toString(),
+          },
+        ]);
       } catch (err) {
         console.error("❌ Audit service error:", err.message);
+        pause();
+        setTimeout(
+          () => consumer.resume([{ topic, partitions: [partition] }]),
+          5000
+        );
       }
+      await heartbeat();
     },
   });
 }
