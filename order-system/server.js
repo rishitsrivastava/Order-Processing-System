@@ -196,6 +196,21 @@ app.delete("/orders/:id", async (req, res) => {
   }
 });
 
+//>>>>>>>>>>>>>>>>>>>get events from order_events_audit<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+app.get("/audit/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM order_events_audit WHERE order_id = $1 ORDER BY processed_at ASC",
+      [orderId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching audit trail:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`order API running at http://localhost:${port}`);
