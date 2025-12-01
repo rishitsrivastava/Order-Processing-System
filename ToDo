@@ -56,3 +56,7 @@ All orders and their current status.
 Event logs.
 
 Real-time updates using WebSocket or polling.
+
+--------------------------------------------------------------------------------------------------------------------------
+
+5: Need to create a good logging in this project
