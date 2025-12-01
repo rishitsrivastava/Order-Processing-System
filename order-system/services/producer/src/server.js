@@ -3,7 +3,7 @@ const app = express();
 
 app.use(express.json());
 
-const orderController = require('../controllers/orderController.js')
+const orderController = require('./controllers/orderController.js')
 
 app.post('/orders', orderController.createOrder);
 
