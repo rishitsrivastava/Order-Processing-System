@@ -1,5 +1,5 @@
 import { Kafka } from "kafkajs";
-import pool from "./db.js";
+import pool from "../../db.js";
 
 const kafka = new Kafka({
   clientId: "order-audit-service",
